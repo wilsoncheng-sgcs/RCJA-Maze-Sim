@@ -4,7 +4,7 @@ title: RCJ Maze Rescue Sim — Documentation
 
 # RCJ Maze Rescue Sim
 
-Documentation for setting up a custom robot and driving/testing it inside the RoboCupJunior (RCJ) Rescue Simulation platform (Erebus), using this repo's `winglander_v1` robot as the running example.
+**This guide is for people who are new to RCJ Rescue Simulation** and want to get from "never opened Webots before" to "have a custom robot driving around a maze." It walks through installing the platform, understanding how the pieces fit together, and testing a robot — using this repo's `winglander_v1` robot as the running example. Where the official Erebus docs already cover something well, this guide links out to them rather than duplicating (and occasionally out-of-date) instructions, and instead focuses on the parts that tend to trip up first-timers.
 
 **Contents**
 
@@ -29,13 +29,25 @@ Under the hood, Erebus is a rules/scoring layer (a Webots "Supervisor" controlle
 
 ## 2. Setup Instructions
 
-1. **Install Python 3.9+** — required by both Erebus and your own controller code. Make sure `python3` is on your `PATH`.
-2. **Install Webots** — Erebus targets a specific Webots release per season (v26.1 of Erebus targets a matching Webots release; check the [Erebus releases page](https://github.com/robocup-junior/erebus/releases) for the exact version pinned to the release you download). Get it from [cyberbotics.com](https://cyberbotics.com/).
-3. **Download Erebus** — grab the [latest release](https://github.com/robocup-junior/erebus/releases) (a zip) and extract it. This repo assumes an extracted copy alongside your controller code (e.g. `~/Downloads/erebus-26.1/`).
-4. **Open a world** — in Webots, open `game/worlds/world1.wbt` (or any world under `game/worlds/`) from your extracted Erebus folder.
-5. **Build your robot** — use the [Robot Customizer](https://v25.robot.erebus.rcj.cloud/) web tool to design a robot (wheels, sensors, camera, etc.) and export it as a JSON file — that's what `winglander_v1.json` in this repo is.
-6. **Generate/import a maze** — use the [Map Generator](https://osaka.rcj.cloud/service/editor/simulation/2025) if you need a custom maze layout, otherwise use one of the bundled `game/worlds/*.wbt` files.
-7. **Load your robot into the simulation** — Erebus reads your robot's JSON through its robot window UI inside Webots and generates the matching Webots PROTO/device tree for it automatically (see [Section 3](#3-components-that-work-together)).
+Follow the **official installation guide** rather than a copy of it here, so you're never following stale steps: start at [v25.erebus.rcj.cloud/docs/installation](https://v25.erebus.rcj.cloud/docs/installation/), then click through to whichever platform guide matches your OS — [Windows](https://v25.erebus.rcj.cloud/docs/installation/windows/), [macOS](https://v25.erebus.rcj.cloud/docs/installation/mac/), or [Linux (Ubuntu)](https://v25.erebus.rcj.cloud/docs/installation/linux/). Once that's done, follow [Getting Started](https://v25.erebus.rcj.cloud/docs/tutorials/getting-started/) to run the sample robot for the first time.
+
+Two things in that official flow are easy to get stuck on as a first-timer — read these before you start:
+
+**"Run the Environment" means opening a file that's already inside your Erebus download, not something you need to find or create separately.** When the docs say to open `world1.wbt` (or any `.wbt` file), that file is sitting inside the Erebus zip you already downloaded, at `game/worlds/world1.wbt`. Extract the zip first, then in Webots use **File → Open World...** and browse to that path inside your extracted folder (e.g. `~/Downloads/erebus-26.1/game/worlds/world1.wbt`). You don't download the world separately, and you don't need to create one yourself to get started — the maze layout is already built into that file.
+
+**Getting the Competition Supervisor / robot window to appear is practically a required setup step, not just a troubleshooting fallback.** After loading a world, Webots is supposed to automatically pop up a "Competition Supervisor" panel (the score/timer/load-controller UI) alongside the 3D view. On many systems it doesn't show up on the first load, which looks like something has failed — it hasn't. Treat this as step zero every time you open a world:
+
+1. If you don't see the Competition Supervisor panel, go to **Tools → Scene Tree** in Webots' top menu to open the scene tree.
+2. In the scene tree, find **`DEF MAINSUPERVISOR Robot`**, right-click it, and choose **Show Robot Window**.
+3. If that still doesn't open anything, open this URL directly in your browser while the simulation is running: `http://localhost:1234/robot_windows/MainSupervisorWindow/MainSupervisorWindow.html?name=robot`.
+
+**You will need to repeat this if you accidentally close the panel later** (it's just a window, not a one-time popup) — the same three steps above bring it back at any point during a session, you don't need to reload the world or restart Webots.
+
+Once your environment runs and the Competition Supervisor is visible, come back here for the parts specific to customizing and testing your own robot:
+
+1. **Build your robot** — use the [Robot Customizer](https://v25.robot.erebus.rcj.cloud/) web tool to design a robot (wheels, sensors, camera, etc.) and export it as a JSON file — that's what `winglander_v1.json` in this repo is.
+2. **Generate/import a maze** — use the [Map Generator](https://osaka.rcj.cloud/service/editor/simulation/2025) if you need a custom maze layout, otherwise use one of the bundled `game/worlds/*.wbt` files.
+3. **Load your robot into the simulation** — Erebus reads your robot's JSON through the Competition Supervisor's "load custom robot" option and generates the matching Webots PROTO/device tree for it automatically (see [Section 3](#3-components-that-work-together)).
 
 ---
 
@@ -149,11 +161,16 @@ This mirrors, at a smaller scale, how Erebus's own judged-run infrastructure wor
 
 ## 7. Note on ROS / ROS2
 
-Erebus, as shipped, does **not** include a built-in ROS or ROS2 bridge — its official controller interface is Webots' native `controller` Python/C++/Java API talking directly to `MainSupervisor` over the emitter/receiver protocol described above. There is no ROS-specific tooling, message definitions, or launch files in the Erebus repository as of this writing.
+Erebus, as shipped, does **not** include a built-in ROS or ROS2 bridge — its official controller interface is Webots' native `controller` Python/C++/Java API talking directly to `MainSupervisor` over the emitter/receiver protocol described above. There is no ROS-specific tooling, message definitions, or launch files in the Erebus repository itself; you'd be bridging it yourself (e.g. wrapping the `controller` API calls shown above inside a ROS2 node), most likely via Webots' own `webots_ros2` integration.
 
-That said, Webots itself has first-party ROS2 integration (`webots_ros2`) usable in *generic* Webots projects. If you want to control this robot via ROS2, you would need to bridge it yourself (e.g. a ROS2 node that wraps the `controller` API calls shown above), and you would be doing so entirely outside of what Erebus or the official rules provide or test against.
+**ROS2 and Docker are both explicitly permitted for the 2026 competition**, per an official ruling from an RCJ moderator on the forum: [Clarification about ROS 2, Docker, and controller startup](https://junior.forum.robocup.org/t/clarification-about-ros-2-docker-and-controller-startup/5350). The key points from that thread:
 
-**Before building on ROS2 for competition use, check the current official rules** for whether ROS/ROS2-based controllers are permitted at all, since permitted languages/frameworks are explicitly defined by the rulebook and can change between seasons.
+- **ROS2 middleware is allowed** — "Yes, no problem" — but you should credit it in your Technical Description Paper, poster, and repository README, same as any external library.
+- **Custom Docker images are allowed**, including any Ubuntu version, package selection, or ROS2 distribution — teams aren't restricted to a stock image.
+- **A bash script (or similar wrapper) launching your Docker-based controller is permitted**, as long as the controller it ultimately starts connects via Webots' remote/extern controller protocol (the same TCP mechanism used in [Section 6](#6-serverclient-connected-method-extern-controller--scoring-ui)) and runs fully autonomously — no internet access and no human oversight during a run.
+- The overarching constraint, in the moderator's words, is that execution **"must respect the spirit of the competition"** — no human control, and the problem-solving code must genuinely be the team's own work.
+
+Rulings like this can be season-specific and are easy to miss if you only read the PDF rulebook — when in doubt, search or ask on the [official forum](https://junior.forum.robocup.org/c/robocupjunior-rescue/6) before committing your team's architecture to an assumption.
 
 ---
 
@@ -166,5 +183,5 @@ That said, Webots itself has first-party ROS2 integration (`webots_ros2`) usable
 - [Map Generator](https://osaka.rcj.cloud/service/editor/simulation/2025)
 - [Official Rules (RoboCupJunior)](https://junior.robocup.org/) — always check for the season-specific PDF; a 2026 copy is bundled in this repo at [`RCJRescueSimulation2026-final.pdf`](https://github.com/wilsoncheng-sgcs/RCJ-Maze-Sim/blob/main/RCJRescueSimulation2026-final.pdf)
 - [RCJ Community Discord](https://discord.gg/5QQntAPg7K)
-- [RCJ Official Forum](https://junior.forum.robocup.org/)
+- [RCJ Official Forum — Rescue category](https://junior.forum.robocup.org/c/robocupjunior-rescue/6)
 - This repo's sample controllers: [`winglander_v1.py`](https://github.com/wilsoncheng-sgcs/RCJ-Maze-Sim/blob/main/controllers/winglander_v1/winglander_v1.py) (launched, WASD test only), [`winglander_v1_extern.py`](https://github.com/wilsoncheng-sgcs/RCJ-Maze-Sim/blob/main/controllers/winglander_v1/winglander_v1_extern.py) (extern/TCP, full telemetry + scoring UI)
