@@ -96,8 +96,36 @@
 		"rz": 0.58,
 		"a": 2.09,
 		"custom": [
-			40,
-			32
+			64,
+			64
 		]
+	},
+	"colsensor": {
+		"dictName": "colsensor",
+		"name": "Colour sensor",
+		"customName": "colour_sensor",
+		"type": "add",
+		"x": 0,
+		"y": -100,
+		"z": -328,
+		"rx": 0.71,
+		"ry": 0.02,
+		"rz": -0.7,
+		"a": 3.17,
+		"custom": []
+	},
+	"gps": {
+		"dictName": "gps",
+		"name": "GPS",
+		"customName": "gps",
+		"type": "add",
+		"x": 0,
+		"y": 0,
+		"z": 0,
+		"rx": -0.5858,
+		"ry": 0.5858,
+		"rz": 0.5858,
+		"a": 2.09,
+		"custom": []
 	}
 }
