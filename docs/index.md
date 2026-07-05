@@ -180,7 +180,7 @@ Rulings like this can be season-specific and are easy to miss if you only read t
 - [Erebus Documentation](https://v25.erebus.rcj.cloud/docs/)
 - [Erebus GitHub (source, releases, issues)](https://github.com/robocup-junior/erebus)
 - [Robot Customizer](https://v25.robot.erebus.rcj.cloud/) / [Robot Customizer issues](https://github.com/robocup-junior/erebus-robot-customisation/issues)
-- [Map Generator](https://osaka.rcj.cloud/service/editor/simulation/2025)
+- [Map Generator](https://osaka.rcj.cloud/service/editor/simulation/2026)
 - [Official Rules (RoboCupJunior)](https://junior.robocup.org/) — always check for the season-specific PDF; a 2026 copy is bundled in this repo at [`RCJRescueSimulation2026-final.pdf`](https://github.com/wilsoncheng-sgcs/RCJ-Maze-Sim/blob/main/RCJRescueSimulation2026-final.pdf)
 - [RCJ Community Discord](https://discord.gg/5QQntAPg7K)
 - [RCJ Official Forum — Rescue category](https://junior.forum.robocup.org/c/robocupjunior-rescue/6)
