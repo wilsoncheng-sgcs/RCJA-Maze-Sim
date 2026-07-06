@@ -106,7 +106,7 @@
 		"customName": "colour_sensor",
 		"type": "add",
 		"x": 0,
-		"y": -100,
+		"y": -70,
 		"z": -328,
 		"rx": 0.71,
 		"ry": 0.02,
