@@ -1,14 +1,14 @@
 ---
-title: RCJ Maze Rescue Sim — Documentation
+title: RCJA Maze Rescue Sim — Documentation
 ---
 
-# RCJ Maze Rescue Sim
+# RCJA Maze Rescue Sim
 
-**This guide is for people who are new to RCJ Rescue Simulation** and want to get from "never opened Webots before" to "have a custom robot driving around a maze." It walks through installing the platform, understanding how the pieces fit together, and testing a robot — using this repo's `winglander_v1` robot as the running example. Where the official Erebus docs already cover something well, this guide links out to them rather than duplicating (and occasionally out-of-date) instructions, and instead focuses on the parts that tend to trip up first-timers.
+**This guide is for people who are new to RCJA Rescue Simulation** - adapted from RCJ Rescue Simulation - and want to get from "never opened Webots before" to "have a custom robot driving around a maze." It walks through installing the platform, understanding how the pieces fit together, and testing a robot — using this repo's `winglander_v1` robot as the running example.
 
 **Contents**
 
-1. [What is RCJ Maze Rescue Sim](#1-what-is-rcj-maze-rescue-sim)
+1. [What is RCJA Maze Rescue Sim](#1-what-is-rcja-maze-rescue-sim)
 2. [Setup Instructions](#2-setup-instructions)
 3. [Components That Work Together](#3-components-that-work-together)
 4. [Quick Start — WASD Test Controller](#4-quick-start--wasd-test-controller)
@@ -19,49 +19,35 @@ title: RCJ Maze Rescue Sim — Documentation
 
 ---
 
-## 1. What is RCJ Maze Rescue Sim
+## 1. What is RCJA Maze Rescue Sim
 
-RCJ Maze Rescue Sim (branded **Erebus**) is the simulation sub-league of [RoboCupJunior Rescue](https://junior.robocup.org/), first introduced in 2021 and now a core part of RCJ Rescue internationally. Teams write autonomous Python (or C/C++/Java) controllers that pilot a customizable robot through a procedurally-assembled maze, mapping it while locating and correctly classifying **victims** (injured people) and **cognitive targets** (hazmat-style signs), all without any human input during a run.
+**RCJA Maze Rescue Sim** is this project's name for RCJA's local adaptation of **Erebus**, the official simulation sub-league of [RoboCupJunior Rescue](https://junior.robocup.org/) (first introduced in 2021, now a core part of RCJ Rescue internationally). The underlying platform, rules, and general gameplay are all inherited from official Erebus — teams write autonomous Python (or C/C++/Java) controllers that pilot a customizable robot through a procedurally-assembled maze, mapping it while locating and correctly classifying **victims** (injured people) and **cognitive targets** (hazmat-style signs), all without any human input during a run. What's RCJA-specific is an additional **Entry Level** difficulty tier and matching tooling, covered throughout this guide.
 
-Under the hood, Erebus is a rules/scoring layer (a Webots "Supervisor" controller) that runs on top of **Webots**, Cyberbotics' physics-accurate robot simulator. This repo customizes the robot itself (`winglander_v1.json`) and adds development-only tooling for driving and inspecting it outside of a real competition run.
+Under the hood, Erebus is a rules/scoring layer (a Webots "Supervisor" controller) that runs on top of **Webots**, Cyberbotics' physics-accurate robot simulator. This repo uses the customised robot (`winglander_v1.json`) and adds development-only tooling (`winglander_v1.py`) and (`winglander_v1_extern.py`) for driving and inspecting it outside of a real competition run as proof of concept.
 
 ---
 
 ## 2. Setup Instructions
 
-Follow the **official installation guide** rather than a copy of it here, so you're never following stale steps: start at [v25.erebus.rcj.cloud/docs/installation](https://v25.erebus.rcj.cloud/docs/installation/), then click through to whichever platform guide matches your OS — [Windows](https://v25.erebus.rcj.cloud/docs/installation/windows/), [macOS](https://v25.erebus.rcj.cloud/docs/installation/mac/), or [Linux (Ubuntu)](https://v25.erebus.rcj.cloud/docs/installation/linux/). Once that's done, follow [Getting Started](https://v25.erebus.rcj.cloud/docs/tutorials/getting-started/) to run the sample robot for the first time.
+**This competition runs on a fork of Erebus, not the official release** — see below for why — so follow **[our own installation guide](installation/)** rather than the official one. It mirrors the official guide's structure (same Python/Webots versions, same Windows/macOS/Linux split) but swaps in the right source to download/clone at every step that matters, so you don't end up with a working Webots setup pointed at the wrong simulator:
 
-Two things in that official flow are easy to get stuck on as a first-timer — read these before you start:
+- [Installation overview](installation/)
+- [Windows](installation/windows/)
+- [macOS](installation/mac/)
+- [Linux (Ubuntu)](installation/linux/)
 
-**"Run the Environment" means opening a file that's already inside your Erebus download, not something you need to find or create separately.** When the docs say to open `world1.wbt` (or any `.wbt` file), that file is sitting inside the Erebus zip you already downloaded, at `game/worlds/world1.wbt`. Extract the zip first, then in Webots use **File → Open World...** and browse to that path inside your extracted folder (e.g. `~/Downloads/erebus-26.1/game/worlds/world1.wbt`). You don't download the world separately, and you don't need to create one yourself to get started — the maze layout is already built into that file.
+Once you've followed that guide and the Competition Supervisor is visible, come back here for the parts specific to customizing and testing your own robot.
 
-**Getting the Competition Supervisor / robot window to appear is practically a required setup step, not just a troubleshooting fallback.** After loading a world, Webots is supposed to automatically pop up a "Competition Supervisor" panel (the score/timer/load-controller UI) alongside the 3D view. On many systems it doesn't show up on the first load, which looks like something has failed — it hasn't. Treat this as step zero every time you open a world:
+### Why a fork, and the matching map editor
 
-1. If you don't see the Competition Supervisor panel, go to **Tools → Scene Tree** in Webots' top menu to open the scene tree.
-2. In the scene tree, find **`DEF MAINSUPERVISOR Robot`**, right-click it, and choose **Show Robot Window**.
-3. If that still doesn't open anything, open this URL directly in your browser while the simulation is running: `http://localhost:1234/robot_windows/MainSupervisorWindow/MainSupervisorWindow.html?name=robot`.
-
-**You will need to repeat this if you accidentally close the panel later** (it's just a window, not a one-time popup) — the same three steps above bring it back at any point during a session, you don't need to reload the world or restart Webots.
-
-Once your environment runs and the Competition Supervisor is visible, come back here for the parts specific to customizing and testing your own robot.
-
-### Use this competition's fork, not the plain upstream release
-
-This document supports a local RCJA-run tier (name TBD) that sits *below* the standard difficulty, aimed at genuinely first-time teams. It works by swapping wall-mounted victim signs for simple floor-mounted colour markers, which removes the orientation/facing check beginners tend to find hardest. That change lives in a fork of Erebus, not the official release, plus a matching fork of the map editor:
-
-- **Simulator**: [`wilsoncheng-sgcs/erebus`](https://github.com/wilsoncheng-sgcs/erebus), branch [`entry-level-floor-victims`](https://github.com/wilsoncheng-sgcs/erebus/tree/entry-level-floor-victims) — adds a `FloorVictim.proto` and the matching detection/scoring wiring. Clone this instead of downloading the official release zip:
-  ```
-  git clone -b entry-level-floor-victims https://github.com/wilsoncheng-sgcs/erebus.git
-  ```
-  Everything else from the official install/getting-started guides above (Webots version, `world1.wbt` location, Competition Supervisor steps) works identically — only the source you clone from is different.
-- **Map editor**: [erebus-map-editor-RCJA](https://wilsoncheng-sgcs.github.io/erebus-map-editor-RCJA/) ([repo](https://github.com/wilsoncheng-sgcs/erebus-map-editor-RCJA)) — a standalone fork of the official map editor with a **Ruleset tier** selector: **Original** and **Intermediate** export identically to the official tool (safe to use for other tiers too), while **Entry Level** emits the floor-marker maps this fork's engine expects. It's a plain static site, so there's nothing to install — just open the link.
+This document supports a local RCJA-run tier (name TBD) that sits *below* the standard difficulty, aimed at genuinely first-time teams. It works by swapping wall-mounted victim signs for simple floor-mounted colour markers, which removes the orientation/facing check beginners tend to find hardest. That change lives in [`wilsoncheng-sgcs/erebus`](https://github.com/wilsoncheng-sgcs/erebus) (branch [`entry-level-floor-victims`](https://github.com/wilsoncheng-sgcs/erebus/tree/entry-level-floor-victims)) — which the installation guide above already has you clone — plus a matching map editor: [erebus-map-editor-RCJA](https://wilsoncheng-sgcs.github.io/erebus-map-editor-RCJA/) ([repo](https://github.com/wilsoncheng-sgcs/erebus-map-editor-RCJA)), a standalone fork of the official map editor with a **Ruleset tier** selector. **Original** and **Intermediate** export identically to the official tool (safe to use for other tiers too), while **Entry Level** emits the floor-marker maps this fork's engine expects. It's a plain static site — nothing to install, just open the link.
 
 Colour legend for Entry Level floor markers: **red = harmed**, **green = unharmed**, **yellow = stable** — the same H/U/S categories used everywhere else in Erebus, just represented as a floor colour instead of a wall sign (see [Section 5](#5-scoring-system)). If you want the full technical rationale (why floor markers instead of wall signs, how detection was adapted), it's written up in [`docs/entry-level-plan.md`](https://github.com/wilsoncheng-sgcs/erebus/blob/entry-level-floor-victims/docs/entry-level-plan.md) on the simulator fork.
 
 ### Customizing and testing your robot
 
-1. **Build your robot** — use the [Robot Customizer](https://v25.robot.erebus.rcj.cloud/) web tool to design a robot (wheels, sensors, camera, etc.) and export it as a JSON file — that's what `winglander_v1.json` in this repo is. This tool is unaffected by the fork above; use it as-is.
-2. **Generate/import a maze** — use the [erebus-map-editor-RCJA](https://wilsoncheng-sgcs.github.io/erebus-map-editor-RCJA/) app above (pick your ruleset tier), or one of the bundled `game/worlds/*.wbt` files from whichever Erebus source you're running.
+1. **Build your robot** — use the RCJ Official [Robot Customizer](https://v25.robot.erebus.rcj.cloud/) web tool to design a robot (wheels, sensors, camera, etc.) and export it as a JSON file — that's what `winglander_v1.json` in this repo is. This tool is unaffected by the RCJA local customisation; use it as-is.
+2. **Generate/import a maze** — use the [erebus-map-editor-RCJA](https://wilsoncheng-sgcs.github.io/erebus-map-editor-RCJA/) app above (pick your ruleset tier), or one of the bundled `game/worlds/*.wbt` files from whichever Erebus source you're running. For your convenience, there is a (`RCJA-Entry test.wbt`) world file for the Entry Level competition map.
 3. **Load your robot into the simulation** — Erebus reads your robot's JSON through the Competition Supervisor's "load custom robot" option and generates the matching Webots PROTO/device tree for it automatically (see [Section 3](#3-components-that-work-together)).
 
 ---
@@ -72,7 +58,7 @@ Four distinct pieces combine to make a working simulated robot:
 
 | Component | Role |
 |---|---|
-| **Webots** | The underlying 3D physics simulator. Runs the world, the robot's rigid bodies/sensors/motors, and executes controller processes (your Python code). Erebus does not replace Webots — it runs *inside* it. |
+| **Webots** | The underlying 3D physics simulator. Runs the world, the robot's rigid bodies/sensors/motors, and executes controller processes (your Python code). Erebus does not replace Webots — it runs *inside* it. Erebus ties to Webots R2023b verion.|
 | **Erebus** | The competition layer. Ships as a Webots project: a `MainSupervisor` controller that spawns the maze, tracks the game clock, scores victim/target identifications, enforces lack-of-progress relocations, and exposes a `robot0Controller`/`robot1Controller` slot for your code. Also ships example worlds and an example player controller. |
 | **Robot Customizer** ([v25.robot.erebus.rcj.cloud](https://v25.robot.erebus.rcj.cloud/)) | A web app for visually placing wheels, distance sensors, a camera, a colour sensor, GPS, etc. on a robot chassis within a fixed points budget. Exports a JSON file (e.g. `winglander_v1.json`) describing every component's type, position, rotation, and custom name. Erebus's `ProtoGenerator.py` reads this JSON at runtime and generates the actual Webots PROTO node for your robot — including the exact device names your controller must use (e.g. a wheel named `wheel1` in the JSON becomes a Webots motor device named `"wheel1 motor"`). |
 | **Map Editor** ([erebus-map-editor-RCJA](https://wilsoncheng-sgcs.github.io/erebus-map-editor-RCJA/), used by this doc) | A web app for laying out maze tiles, walls, victims, and cognitive targets, exporting a Webots world file Erebus can load. This is a standalone fork of the official [rcj-rescue-cms](https://github.com/robocup-junior/rcj-rescue-cms) map editor (MIT-licensed, attribution preserved), with an added **Ruleset tier** selector so it can also export the Entry Level floor-marker maps the `entry-level-floor-victims` Erebus fork expects. |
@@ -131,7 +117,7 @@ while robot.step(TIME_STEP) != -1:
     wheel1.setVelocity(right_speed)
 ```
 
-Full file: [`controllers/winglander_v1/winglander_v1.py`](https://github.com/wilsoncheng-sgcs/RCJ-Maze-Sim/blob/main/controllers/winglander_v1/winglander_v1.py).
+Full file: [`controllers/winglander_v1/winglander_v1.py`](https://github.com/wilsoncheng-sgcs/RCJA-Maze-Sim/blob/main/controllers/winglander_v1/winglander_v1.py).
 
 ---
 
@@ -140,15 +126,15 @@ Full file: [`controllers/winglander_v1/winglander_v1.py`](https://github.com/wil
 Erebus's scoring engine (`MainSupervisor.py`) awards and deducts points for things like:
 
 - **Victim identification** — correctly reporting a nearby victim's position and type (`H` harmed, `S` stable, `U` unharmed) via the emitter/receiver protocol (see [Section 6](#6-serverclient-connected-method-extern-controller--scoring-ui)). Correct type adds a bonus on top of a base identification score; a wrong-but-nearby report is still scored lower, and a report with nothing nearby is a **misidentification penalty**.
-- **Cognitive target identification** — same mechanism, but for hazmat-style signs (`F` flammable gas, `P` poison, `C` corrosive, `O` organic peroxide), generally worth more points than victims.
+- **Cognitive target identification** — same mechanism, but for hazmat-style signs (`F` flammable gas, `P` poison, `C` corrosive, `O` organic peroxide), generally worth more points than victims. Cognitive targets are only present in the original RCJ International level comp.
 - **Mapping score** — submitting a reconstructed map of the maze at the end of a run, scored against the ground-truth layout.
 - **Exit bonus** — returning to the start tile before time runs out adds a percentage bonus to the final score, but only if at least one victim was identified.
 - **Lack-of-progress penalty** — the robot is automatically relocated to its last checkpoint if stationary for too long (20s) or if it falls into a black-hole tile, resetting forward progress on that section.
-- **Room/tile multipliers** — some rooms multiply the points scored for victims/targets found inside them.
+- **Room/tile multipliers** — some rooms multiply the points scored for victims/targets found inside them. Only present in the original RCJ International level comp.
 
 If you're running the Entry Level tier ([Section 2](#2-setup-instructions)), floor-marker victims reuse this exact same `H`/`U`/`S` scoring path unchanged — only how the marker is presented to the robot (a floor colour instead of a wall sign) differs, not how it's scored.
 
-These mechanics and their exact point values **change between rule seasons** and are governed by the official rulebook — this doc intentionally does not hardcode point totals. Always check the version-matched official rules PDF (a 2026 copy is bundled in this repo as [`RCJRescueSimulation2026-final.pdf`](https://github.com/wilsoncheng-sgcs/RCJ-Maze-Sim/blob/main/RCJRescueSimulation2026-final.pdf)) for authoritative scoring details, and cross-reference against whatever Erebus release you're actually running, since scoring logic lives in that release's `MainSupervisor.py`/`Victim.py`.
+These mechanics and their exact point values **change between rule seasons** and are governed by the official rulebook — this doc intentionally does not hardcode point totals. Always check the version-matched official rules PDF (a 2026 copy is bundled in this repo as [`RCJRescueSimulation2026-final.pdf`](https://github.com/wilsoncheng-sgcs/RCJA-Maze-Sim/blob/main/RCJRescueSimulation2026-final.pdf)) for authoritative scoring details, and cross-reference against whatever Erebus release you're actually running, since scoring logic lives in that release's `MainSupervisor.py`/`Victim.py`.
 
 ---
 
@@ -156,7 +142,7 @@ These mechanics and their exact point values **change between rule seasons** and
 
 Beyond simple WASD driving, Erebus's robot talks to the game engine (`MainSupervisor`, acting as the "server") over a pair of built-in `emitter`/`receiver` devices — this is the same channel your real autonomous controller uses to submit victim/target reports and query game state. You can run your controller as a **standalone ("extern") process**, connected to a live Webots simulation over TCP, instead of having Webots launch it for you — useful for iterating without restarting the sim each time.
 
-This repo's [`controllers/winglander_v1/winglander_v1_extern.py`](https://github.com/wilsoncheng-sgcs/RCJ-Maze-Sim/blob/main/controllers/winglander_v1/winglander_v1_extern.py) demonstrates the full loop in a single pygame window:
+This repo's [`controllers/winglander_v1/winglander_v1_extern.py`](https://github.com/wilsoncheng-sgcs/RCJA-Maze-Sim/blob/main/controllers/winglander_v1/winglander_v1_extern.py) demonstrates the full loop in a single pygame window:
 
 - WASD driving (again, **testing only** — see the warning in [Section 4](#4-quick-start--wasd-test-controller))
 - Live camera feed and colour sensor RGB readout
@@ -195,6 +181,7 @@ Rulings like this can be season-specific and are easy to miss if you only read t
 
 **This competition's forks (use these to actually set up and play):**
 
+- [Our installation guide](installation/) — start here, not the official installation docs.
 - [RCJA Erebus fork, `entry-level-floor-victims` branch](https://github.com/wilsoncheng-sgcs/erebus/tree/entry-level-floor-victims) — the simulator this doc's Entry Level tier runs on; clone this instead of the official release.
 - [RCJA Map Editor (live app)](https://wilsoncheng-sgcs.github.io/erebus-map-editor-RCJA/) / [repo](https://github.com/wilsoncheng-sgcs/erebus-map-editor-RCJA) — the map editor with the Entry Level ruleset tier.
 - [Entry Level design rationale](https://github.com/wilsoncheng-sgcs/erebus/blob/entry-level-floor-victims/docs/entry-level-plan.md) — full technical write-up of what changed and why.
@@ -206,10 +193,10 @@ Rulings like this can be season-specific and are easy to miss if you only read t
 - [Erebus GitHub (source, releases, issues)](https://github.com/robocup-junior/erebus)
 - [Robot Customizer](https://v25.robot.erebus.rcj.cloud/) / [Robot Customizer issues](https://github.com/robocup-junior/erebus-robot-customisation/issues)
 - [Official Map Generator](https://osaka.rcj.cloud/service/editor/simulation/2026) / [source (rcj-rescue-cms)](https://github.com/robocup-junior/rcj-rescue-cms) — what the RCJA map editor above was forked from
-- [Official Rules (RoboCupJunior)](https://junior.robocup.org/) — always check for the season-specific PDF; a 2026 copy is bundled in this repo at [`RCJRescueSimulation2026-final.pdf`](https://github.com/wilsoncheng-sgcs/RCJ-Maze-Sim/blob/main/RCJRescueSimulation2026-final.pdf)
+- [Official Rules (RoboCupJunior)](https://junior.robocup.org/) — always check for the season-specific PDF; a 2026 copy is bundled in this repo at [`RCJRescueSimulation2026-final.pdf`](https://github.com/wilsoncheng-sgcs/RCJA-Maze-Sim/blob/main/RCJRescueSimulation2026-final.pdf)
 - [RCJ Community Discord](https://discord.gg/5QQntAPg7K)
 - [RCJ Official Forum — Rescue category](https://junior.forum.robocup.org/c/robocupjunior-rescue/6)
 
 **This repo:**
 
-- Sample controllers: [`winglander_v1.py`](https://github.com/wilsoncheng-sgcs/RCJ-Maze-Sim/blob/main/controllers/winglander_v1/winglander_v1.py) (launched, WASD test only), [`winglander_v1_extern.py`](https://github.com/wilsoncheng-sgcs/RCJ-Maze-Sim/blob/main/controllers/winglander_v1/winglander_v1_extern.py) (extern/TCP, full telemetry + scoring UI)
+- Sample controllers: [`winglander_v1.py`](https://github.com/wilsoncheng-sgcs/RCJA-Maze-Sim/blob/main/controllers/winglander_v1/winglander_v1.py) (launched, WASD test only), [`winglander_v1_extern.py`](https://github.com/wilsoncheng-sgcs/RCJA-Maze-Sim/blob/main/controllers/winglander_v1/winglander_v1_extern.py) (extern/TCP, full telemetry + scoring UI)
