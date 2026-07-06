@@ -6,6 +6,10 @@ Drives the two wheel motors (wheel1, wheel2) using WASD keys:
     A - turn/strafe left
     D - turn/strafe right
 Release all keys to stop. Press Q/ESC-equivalent isn't needed; just stop pressing keys.
+
+Keyboard input only reaches this controller while the Webots 3D view has
+focus - click into that window (not a terminal, not this file) before
+pressing WASD, or nothing will happen.
 """
 
 from controller import Robot

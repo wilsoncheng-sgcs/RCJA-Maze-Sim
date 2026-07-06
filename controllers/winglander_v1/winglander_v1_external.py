@@ -39,9 +39,9 @@ Install the one extra dependency once:
 1. Start/keep running the Erebus world in Webots. It will pause and wait for
    an extern connection for the "Erebus_Bot" robot.
 2. In a separate terminal, run:
-        python3 winglander_v1_extern.py
+        python3 winglander_v1_external.py
    Optionally point it at a specific robot name / non-default host or port:
-        WEBOTS_CONTROLLER_URL=tcp://127.0.0.1:1234/Erebus_Bot python3 winglander_v1_extern.py
+        WEBOTS_CONTROLLER_URL=tcp://127.0.0.1:1234/Erebus_Bot python3 winglander_v1_external.py
 3. Click into the pygame window and drive with WASD.
 """
 

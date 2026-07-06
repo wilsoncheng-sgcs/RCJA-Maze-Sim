@@ -23,7 +23,7 @@ title: RCJA Maze Rescue Sim — Documentation
 
 **RCJA Maze Rescue Sim** is this project's name for RCJA's local adaptation of **Erebus**, the official simulation sub-league of [RoboCupJunior Rescue](https://junior.robocup.org/) (first introduced in 2021, now a core part of RCJ Rescue internationally). The underlying platform, rules, and general gameplay are all inherited from official Erebus — teams write autonomous Python (or C/C++/Java) controllers that pilot a customizable robot through a procedurally-assembled maze, mapping it while locating and correctly classifying **victims** (injured people) and **cognitive targets** (hazmat-style signs), all without any human input during a run. What's RCJA-specific is an additional **Entry Level** difficulty tier and matching tooling, covered throughout this guide.
 
-Under the hood, Erebus is a rules/scoring layer (a Webots "Supervisor" controller) that runs on top of **Webots**, Cyberbotics' physics-accurate robot simulator. This repo uses the customised robot (`winglander_v1.json`) and adds development-only tooling (`winglander_v1.py`) and (`winglander_v1_extern.py`) for driving and inspecting it outside of a real competition run as proof of concept.
+Under the hood, Erebus is a rules/scoring layer (a Webots "Supervisor" controller) that runs on top of **Webots**, Cyberbotics' physics-accurate robot simulator. This repo uses the customised robot (`winglander_v1.json`) and adds development-only tooling (`winglander_v1.py`) and (`winglander_v1_external.py`) for driving and inspecting it outside of a real competition run as proof of concept.
 
 ---
 
@@ -73,6 +73,10 @@ The fastest way to confirm your robot config is wired up correctly (correct devi
 
 > [!WARNING]
 > **This WASD controller is a platform-testing tool only.** Manual/keyboard-driven control is **not permitted in RCJ Rescue Simulation competition** — competition robots must operate fully autonomously, with no operator input during a run. Do not submit this file, or any code based on directly reading human keyboard input during a match, as your competition controller. Always check the current [official rules](#8-links) for exactly what's permitted.
+
+**Dependencies: none to install.** `from controller import Robot` is Webots' own bundled Python API — it's only importable because Webots launches this script itself and injects it onto the path; you don't `pip install` anything for this one.
+
+**Keyboard focus: click the Webots 3D view.** This controller reads keys through Webots' own `Keyboard` device, which only receives input while the **Webots 3D view window itself** has focus — not your terminal, not an editor, not this webpage. If WASD does nothing, click directly into the simulation view first.
 
 Save the following as `controllers/winglander_v1/winglander_v1.py` inside your Erebus install (so the folder name matches the Python filename, per Webots convention), set the robot's `controller` field to `winglander_v1`, then run the simulation and click into the 3D view before pressing keys:
 
@@ -142,7 +146,7 @@ These mechanics and their exact point values **change between rule seasons** and
 
 Beyond simple WASD driving, Erebus's robot talks to the game engine (`MainSupervisor`, acting as the "server") over a pair of built-in `emitter`/`receiver` devices — this is the same channel your real autonomous controller uses to submit victim/target reports and query game state. You can run your controller as a **standalone ("extern") process**, connected to a live Webots simulation over TCP, instead of having Webots launch it for you — useful for iterating without restarting the sim each time.
 
-This repo's [`controllers/winglander_v1/winglander_v1_extern.py`](https://github.com/wilsoncheng-sgcs/RCJA-Maze-Sim/blob/main/controllers/winglander_v1/winglander_v1_extern.py) demonstrates the full loop in a single pygame window:
+This repo's [`controllers/winglander_v1/winglander_v1_external.py`](https://github.com/wilsoncheng-sgcs/RCJA-Maze-Sim/blob/main/controllers/winglander_v1/winglander_v1_external.py) demonstrates the full loop in a single pygame window:
 
 - WASD driving (again, **testing only** — see the warning in [Section 4](#4-quick-start--wasd-test-controller))
 - Live camera feed and colour sensor RGB readout
@@ -151,12 +155,17 @@ This repo's [`controllers/winglander_v1/winglander_v1_extern.py`](https://github
 - **Lack-of-progress** — passively watches for an unprompted single `'L'` byte the server sends whenever it relocates the robot
 - **Victim/target reporting UI** — X/Z coordinate fields (with a "Pull from GPS" shortcut) and a dropdown of the 7 valid type codes (H/S/U/F/P/C/O), packed as `struct.pack("i i c", x_cm, z_cm, type_char)` and sent via the emitter on a button click
 
+**Dependency: `pip install pygame`** — the only third-party package this script needs (everything else it imports is either Python stdlib or Webots' own `controller` API, located manually via a `sys.path`/`WEBOTS_HOME` lookup since Webots isn't the one launching this script).
+
+**Keyboard focus: click the pygame window, not Webots.** Unlike Section 4's controller, this script builds its own window and reads keys through pygame's own event loop — Webots' 3D view has nothing to do with input here. Clicking into the Webots view will do nothing; click into the pygame window that pops up when you run the script.
+
 Setup summary (see the full docstring in the file for details):
 
-1. In `game/controllers/MainSupervisor/config.txt`, set the 5th field ("Keep remote") to `1` so Erebus marks the robot's controller as `<extern>` instead of launching it itself.
-2. Restart Webots so the config change takes effect, and load your world.
-3. Run `python3 winglander_v1_extern.py` from a terminal — it connects to the running simulation over `WEBOTS_CONTROLLER_URL` (defaults to `tcp://127.0.0.1:1234/Erebus_Bot`).
-4. Click into the pygame window (not the Webots view) to drive and use the reporting UI.
+1. `pip install pygame`, if you haven't already.
+2. In `game/controllers/MainSupervisor/config.txt`, set the 5th field ("Keep remote") to `1` so Erebus marks the robot's controller as `<extern>` instead of launching it itself.
+3. Restart Webots so the config change takes effect, and load your world.
+4. Run `python3 winglander_v1_external.py` from a terminal — it connects to the running simulation over `WEBOTS_CONTROLLER_URL` (defaults to `tcp://127.0.0.1:1234/Erebus_Bot`).
+5. Click into the pygame window (not the Webots view) to drive and use the reporting UI.
 
 This mirrors, at a smaller scale, how Erebus's own judged-run infrastructure works: `MainSupervisor.py` can launch a team's submitted controller inside an isolated Docker container that connects back to the running Webots simulation the same way — as an extern TCP client talking to the local Webots "server." The difference is that a real competition controller must decide *when* and *what* to report autonomously, rather than from a human clicking buttons.
 
@@ -199,4 +208,4 @@ Rulings like this can be season-specific and are easy to miss if you only read t
 
 **This repo:**
 
-- Sample controllers: [`winglander_v1.py`](https://github.com/wilsoncheng-sgcs/RCJA-Maze-Sim/blob/main/controllers/winglander_v1/winglander_v1.py) (launched, WASD test only), [`winglander_v1_extern.py`](https://github.com/wilsoncheng-sgcs/RCJA-Maze-Sim/blob/main/controllers/winglander_v1/winglander_v1_extern.py) (extern/TCP, full telemetry + scoring UI)
+- Sample controllers: [`winglander_v1.py`](https://github.com/wilsoncheng-sgcs/RCJA-Maze-Sim/blob/main/controllers/winglander_v1/winglander_v1.py) (launched, WASD test only), [`winglander_v1_external.py`](https://github.com/wilsoncheng-sgcs/RCJA-Maze-Sim/blob/main/controllers/winglander_v1/winglander_v1_external.py) (extern/TCP, full telemetry + scoring UI)
